@@ -7,35 +7,23 @@ import sqlite3, os, csv, openpyxl, datetime
 
     else pass
 """
-def BuildDatabase():
-    """Build the inventoyr database"""
-    # Database name
-    sqlite_file = 'cos_inventory_db.sqlite'
-
-    # Table Variables
-    table_name1 = 'hardware_inventory'
-
-    # Columns for asset_tags table
-    new_field = 'my_1st_column'
-
-    # column data type for asset_tags table
-    field_type = 'INTEGER'  # column data type
-
-    # Connecting to the database file
-    conn = sqlite3.connect(sqlite_file)
-    c = conn.cursor()
-
-    # Creating a new SQLite table with 1 column
-    c.execute('CREATE TABLE {tn} ({nf} {ft})'.format(tn=table_name1, nf=new_field, ft=field_type))
-
-    # Creating a second table with 1 column and set it as PRIMARY KEY
-    # note that PRIMARY KEY column must consist of unique values!
-    c.execute('CREATE TABLE {tn} ({nf} {ft} PRIMARY KEY)'.format(tn=table_name2, nf=new_field, ft=field_type))
-
-    # Committing changes and closing the connection to the database file
-    conn.commit()
-    conn.close()
-
+# Dictionary Map for PC Lifecycle .CSV files
+excel_dict = {
+    'D_CODE' : 'asset_tag',
+    'D_TYPE' : 'type',
+    'D_MAC_WIRED' : 'mac_wired',
+    'D_MAC_WIRELESS' : 'mac_wireless',
+    'D_AMT'	: 'cost',
+    'D_ACQD_DATE' : 'purchase_date',
+    'D_SERIAL_NUM' : 'serial_number',
+    'D_PO' : 'po',
+    'D_ORGN_CODE' : 'organization_code',
+    'T_ORGN_CODE_DESC' : 'department',
+    'D_LOCN_CODE_RESP' : 'location',
+    'D_DESC' : 'description',
+    'D_DEVICE_OWNER' : 'owner',
+    'D_OS' : 'os',
+}
 
 """Searches fo CSV files and create a list with its contents"""
 # Create dict_list
