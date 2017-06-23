@@ -29,9 +29,10 @@ def create_table(conn, create_table_sql):
         print(e)
 
 def main():
-    database = "C:\\Users\\tylerhardy\\Developer\\PythonSql\\cos_inventory.db"
+    # database = "C:\\Users\\tylerhardy\\Developer\\PythonSql\\cos_inventory.db"
+    database = "cos_inventory.db"
 
-    sql_create_hardware_table = """ CREATE TABLE IF NOT EXISTS hardware (
+    sql_create_properties_table = """ CREATE TABLE IF NOT EXISTS properties (
                                     id integer PRIMARY KEY,
                                     make text,
                                     model text,
@@ -50,8 +51,10 @@ def main():
 
     sql_create_assets_table = """ CREATE TABLE IF NOT EXISTS assets (
                                     id integer PRIMARY KEY,
-                                    hardware_id integer NOT NULL,
+                                    properites_id integer NOT NULL,
                                     asset_tag text NOT NULL,
+                                    pc_lifecycle text,
+                                    proptery_control text,
                                     owner text,
                                     curator text,
                                     location text,
@@ -66,18 +69,14 @@ def main():
                                     notes text,
                                     added_date text,
                                     modified_date text,
-                                    FOREIGN KEY (hardware_id) REFERENCES hardware (id)
+                                    FOREIGN KEY (properites_id) REFERENCES properties (id)
                                 ); """
 
     sql_create_software_table = """ CREATE TABLE IF NOT EXISTS software (
                                     id integer PRIMARY KEY,
-                                    asset_id integer NOT NULL,
+                                    assets_id integer NOT NULL,
                                     computer_name text,
                                     os text,
-                                    pc_lifecycle text,
-                                    pc_lifecycle_update text,
-                                    proptery_control text,
-                                    proptery_control_update text,
                                     active_directory_ou text,
                                     sccm_db text,
                                     jamf_db text,
@@ -87,7 +86,7 @@ def main():
                                     notes text,
                                     added_date text,
                                     modified_date text,
-                                    FOREIGN KEY (asset_id) REFERENCES assets (id)
+                                    FOREIGN KEY (assets_id) REFERENCES assets (id)
                                 ); """
 
     # Create a database connection
@@ -96,7 +95,7 @@ def main():
         # Create assets table
         create_table(conn, sql_create_assets_table)
         # Create hardware table
-        create_table(conn, sql_create_hardware_table)
+        create_table(conn, sql_create_properties_table)
         # Create software table
         create_table(conn, sql_create_software_table)
     else:
@@ -108,10 +107,10 @@ def main():
     # Create a database connection
     conn = create_connection(database)
     if conn is not None:
+        # Create properties table
+        create_table(conn, sql_create_properties_table)
         # Create assets table
         create_table(conn, sql_create_assets_table)
-        # Create hardware table
-        create_table(conn, sql_create_hardware_table)
         # Create software table
         create_table(conn, sql_create_software_table)
     else:
