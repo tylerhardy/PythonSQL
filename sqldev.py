@@ -95,6 +95,7 @@ def create_property(table, insert, values):
     query_string = 'INSERT INTO {0} ({1}) VALUES ({2})'.format(table,insert,values)
     print(query_string)
 
+
 if __name__ == '__main__':
     main()
 
