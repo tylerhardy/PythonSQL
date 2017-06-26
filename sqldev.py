@@ -10,6 +10,8 @@ from sqlite3 import Error
 
     else pass
 """
+TABLE_PROPERTIES = 'properties'
+TABLE_ASSETS = 'assets'
 
 def create_connection(db_file):
     """ create a database connection to the SQLite database
@@ -37,69 +39,101 @@ def main():
 
     conn = create_connection(database)
     with conn:
+        """ Next revision, change table then prop in dict"""
         excel_dict = {
-            'D_TYPE' : ['type', 'properties'],
-            'D_MAC_WIRED' : ['mac_wired', 'properties'],
-            'D_MAC_WIRELESS' : ['mac_wireless', 'properties'],
-            'D_SERIAL_NUM' : ['serial_number', 'properties'],
-            'D_CODE' : ['asset_tag', 'assets'],
-            'D_AMT'	: ['cost', 'assets'],
-            'D_ACQD_DATE' : ['purchase_date', 'assets'],
-            'D_PO' : ['po', 'assets'],
-            'D_ORGN_CODE' : ['organization_code', 'assets'],
-            'T_ORGN_CODE_DESC' : ['department', 'assets'],
-            'D_LOCN_CODE_RESP' : ['location', 'assets'],
-            'D_DESC' : ['description', 'assets'],
-            'D_DEVICE_OWNER' : ['owner', 'assets']
+            'D_TYPE' : [TABLE_PROPERTIES, 'type'],
+            'D_MAC_WIRED' : [TABLE_PROPERTIES, 'mac_wired'],
+            'D_MAC_WIRELESS' : [TABLE_PROPERTIES, 'mac_wireless'],
+            'D_SERIAL_NUM' : [TABLE_PROPERTIES, 'serial_number'],
+            'D_CODE' : [TABLE_ASSETS, 'asset_tag'],
+            'D_AMT'	: [TABLE_ASSETS, 'cost'],
+            'D_ACQD_DATE' : [TABLE_ASSETS, 'purchase_date'],
+            'D_PO' : [TABLE_ASSETS, 'po'],
+            'D_ORGN_CODE' : [TABLE_ASSETS, 'organization_code'],
+            'T_ORGN_CODE_DESC' : [TABLE_ASSETS, 'department'],
+            'D_LOCN_CODE_RESP' : [TABLE_ASSETS, 'location'],
+            'D_DESC' : [TABLE_ASSETS, 'description'],
+            'D_DEVICE_OWNER' : [TABLE_ASSETS, 'owner']
         }
         """Searches fo CSV files and create a list with its contents"""
         for csvFilename in os.listdir('.'):
             if not csvFilename.endswith('.csv'):
                 continue
             with open(csvFilename,'r') as csvFileObj:
-                _EXCEL_FILE = csv.reader(csvFileObj)
+                _EXCEL_FILE_OBJECT = csv.reader(csvFileObj)
 
-                EXCEL_TOP_ROW = next(_EXCEL_FILE)
+                EXCEL_TOP_ROW = next(_EXCEL_FILE_OBJECT)
                 PROPERTIES_LIST = []
 
-                for data_row in _EXCEL_FILE:
-                    SQL_DICT = {'properties':[], 'assets':[]}
+                for data_row in _EXCEL_FILE_OBJECT:
+                    SQL_DICT = {TABLE_PROPERTIES:[], TABLE_ASSETS:[]}
                     for index, item in enumerate(data_row):
                         SQL_IDENTIFIER = excel_dict.get(EXCEL_TOP_ROW[index])
                         if SQL_IDENTIFIER is not None:
                             if str(item).lower().strip() is not "":
-                                if SQL_IDENTIFIER[1] == 'assets':
-                                    SQL_DICT['assets'].append([item, SQL_IDENTIFIER[0]])
-                                elif SQL_IDENTIFIER[1] == 'properties':
-                                    SQL_DICT['properties'].append([item, SQL_IDENTIFIER[0]])
-
-                    # print(SQL_DICT)
-                    sql_insert = ""
-                    sql_values = ""
-                    for table, column in SQL_DICT.items():
-                        print(table)
-                        for i in column:
-                            sql_insert += i[1] + ', '
-                            sql_values += i[0] + ', '
-                        sql_insert = (sql_insert.strip()[:-1])
-                        sql_values = (sql_values.strip()[:-1])
-                        # print(sql_insert)
-                        # print(sql_values)
-                        create_property(table,sql_insert,sql_values)
-                        sql_insert = ""
-                        sql_values = ""
+                                if SQL_IDENTIFIER[0] == TABLE_ASSETS:
+                                    SQL_DICT[TABLE_ASSETS].append([item, SQL_IDENTIFIER[1]])
+                                elif SQL_IDENTIFIER[0] == TABLE_PROPERTIES:
+                                    SQL_DICT[TABLE_PROPERTIES].append([item, SQL_IDENTIFIER[1]])
+                    _ASSET_TAG_ID = ""
+                    sql_insert = []
+                    sql_values = []
+                    property_id = -1
+                    for table, columns in SQL_DICT.items():
+                        for column in columns:
+                            sql_insert.append(column[1])
+                            sql_values.append(column[0])
+                        if table == TABLE_PROPERTIES:
+                            property_id = check_serial_number(conn, table, sql_insert, sql_values)
+                            print(sql_insert)
+                            print(sql_values)
+                        elif table == TABLE_ASSETS:
+                            check_asset_id(conn, table, sql_insert, sql_values, property_id)
+                            property_id = -1
+                            print(sql_insert)
+                            print(sql_values)
                         print('\n')
                     break
 
-def create_property(table, insert, values):
-    query_string = 'INSERT INTO {0} ({1}) VALUES ({2})'.format(table,insert,values)
-    print(query_string)
+def check_serial_number(conn, table, insert, values):
+    asset_index = (insert.index('serial_number'))
+    asset_value = values[asset_index]
+    query = "SELECT id, serial_number FROM properties WHERE serial_number='{0}';".format(asset_value)
+    cur = conn.cursor()
+    cur.execute(query)
+    serial_row = cur.fetchone()
+    if serial_row is None:
+        print('Execute insert query')
+        return _get_or_insert(conn, table, insert, values, -1)
+    else:
+        print('Already exists')
+        return serial_row[0]
 
+def check_asset_id(conn, table, insert, values, id):
+    asset_index = (insert.index('asset_tag'))
+    asset_value = values[asset_index]
+    query = "SELECT id, asset_tag FROM assets WHERE asset_tag='{0}';".format(asset_value)
+    cur = conn.cursor()
+    cur.execute(query)
+    serial_row = cur.fetchone()
+    if serial_row is None:
+        print('Execute insert query')
+        return _get_or_insert(conn, table, insert, values, id)
+    else:
+        print('Already exists')
+        return serial_row[0]
+
+def _get_or_insert(conn, table, insert, values, id):
+    # get_query = 'SELECT {0} FROM {1}'.format()
+    insert_object_id = ""
+    insert = ', '.join(insert)
+    values = "'" + "','".join(values) + "'"
+    query_string = 'INSERT INTO {0} ({1}) VALUES ({2})'.format(table,insert,values)
+    # print(query_string)
+    # cur = conn.cursor()
+    # cur.execute(query_string)
+    # return cur.lastrowid
+    
 
 if __name__ == '__main__':
     main()
-
-    #         if row[type_id] == 'PC' or  row[type_id] == 'LT':
-    #             var_list.append([row[asset_id]])
-    #             dict_list[str(name_var)] = var_list
-    # csvFileObj.close()

@@ -37,7 +37,7 @@ def main():
                                     make text,
                                     model text,
                                     type text,
-                                    serial_number text,
+                                    serial_number text UNIQUE,
                                     mac_wired text,
                                     mac_wireless text,
                                     processor text,
@@ -52,7 +52,7 @@ def main():
     sql_create_assets_table = """ CREATE TABLE IF NOT EXISTS assets (
                                     id integer PRIMARY KEY,
                                     properites_id integer NOT NULL,
-                                    asset_tag text NOT NULL,
+                                    asset_tag text NOT NULL UNIQUE,
                                     pc_lifecycle text,
                                     proptery_control text,
                                     owner text,
@@ -75,7 +75,7 @@ def main():
     sql_create_software_table = """ CREATE TABLE IF NOT EXISTS software (
                                     id integer PRIMARY KEY,
                                     assets_id integer NOT NULL,
-                                    computer_name text,
+                                    computer_name text UNIQUE,
                                     os text,
                                     active_directory_ou text,
                                     sccm_db text,
