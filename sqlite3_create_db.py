@@ -44,6 +44,7 @@ def main():
                                     harddrvie text,
                                     ram text,
                                     video_card text,
+                                    description,
                                     notes text,
                                     added_date text,
                                     modified_date text
@@ -51,7 +52,7 @@ def main():
 
     sql_create_assets_table = """ CREATE TABLE IF NOT EXISTS assets (
                                     id integer PRIMARY KEY,
-                                    properites_id integer NOT NULL,
+                                    properties_id integer NOT NULL,
                                     asset_tag text NOT NULL UNIQUE,
                                     pc_lifecycle text,
                                     proptery_control text,
@@ -69,7 +70,7 @@ def main():
                                     notes text,
                                     added_date text,
                                     modified_date text,
-                                    FOREIGN KEY (properites_id) REFERENCES properties (id)
+                                    FOREIGN KEY (properties_id) REFERENCES properties (id)
                                 ); """
 
     sql_create_software_table = """ CREATE TABLE IF NOT EXISTS software (
